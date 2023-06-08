@@ -1,0 +1,145 @@
+--- a/user-group.js	2023-05-25 20:02:24.000000000 +0900
++++ b/user-group.js	2023-06-08 18:55:27.550900040 +0900
+@@ -24,6 +24,7 @@ const { ObjectId } = mongoose.Types;
+  */
+ module.exports = (crowi) => {
+     const loginRequiredStrictly = require('../../middlewares/login-required')(crowi);
++    const accessTokenParser = require('../../middlewares/access-token-parser')(crowi);
+     const adminRequired = require('../../middlewares/admin-required')(crowi);
+     const addActivity = (0, add_activity_1.generateAddActivityMiddleware)(crowi);
+     const activityEvent = crowi.event('activity');
+@@ -94,7 +95,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: a result of `UserGroup.find`
+      */
+-    router.get('/', loginRequiredStrictly, adminRequired, async (req, res) => {
++    router.get('/', accessTokenParser, loginRequiredStrictly, adminRequired, async (req, res) => {
+         const { query } = req;
+         // TODO 85062: improve sort
+         try {
+@@ -144,7 +145,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: userGroup objects
+      */
+-    router.get('/ancestors', loginRequiredStrictly, adminRequired, validator.ancestorGroup, async (req, res) => {
++    router.get('/ancestors', accessTokenParser, loginRequiredStrictly, adminRequired, validator.ancestorGroup, async (req, res) => {
+         const { groupId } = req.query;
+         try {
+             const userGroup = await user_group_1.default.findById(groupId);
+@@ -158,7 +159,7 @@ module.exports = (crowi) => {
+         }
+     });
+     // TODO 85062: improve sort
+-    router.get('/children', loginRequiredStrictly, adminRequired, validator.listChildren, async (req, res) => {
++    router.get('/children', accessTokenParser, loginRequiredStrictly, adminRequired, validator.listChildren, async (req, res) => {
+         try {
+             const { parentIds, includeGrandChildren = false } = req.query;
+             const userGroupsResult = await user_group_1.default.findChildUserGroupsByParentIds(parentIds, includeGrandChildren);
+@@ -203,7 +204,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: A result of `UserGroup.createGroupByName`
+      */
+-    router.post('/', loginRequiredStrictly, adminRequired, addActivity, validator.create, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
++    router.post('/', accessTokenParser, loginRequiredStrictly, adminRequired, addActivity, validator.create, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
+         const { name, description = '', parentId } = req.body;
+         try {
+             const userGroupName = crowi.xss.process(name);
+@@ -249,7 +250,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: userGroup objects
+      */
+-    router.get('/selectable-parent-groups', loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
++    router.get('/selectable-parent-groups', accessTokenParser, loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
+         const { groupId } = req.query;
+         try {
+             const userGroup = await user_group_1.default.findById(groupId);
+@@ -294,7 +295,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: userGroup objects
+      */
+-    router.get('/selectable-child-groups', loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
++    router.get('/selectable-child-groups', accessTokenParser, loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
+         const { groupId } = req.query;
+         try {
+             const userGroup = await user_group_1.default.findById(groupId);
+@@ -340,7 +341,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: userGroup object
+      */
+-    router.get('/:id', loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
++    router.get('/:id', accessTokenParser, loginRequiredStrictly, adminRequired, validator.selectableGroups, async (req, res) => {
+         const { id: groupId } = req.params;
+         try {
+             const userGroup = await user_group_1.default.findById(groupId);
+@@ -390,7 +391,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: A result of `UserGroup.removeCompletelyById`
+      */
+-    router.delete('/:id', loginRequiredStrictly, adminRequired, validator.delete, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
++    router.delete('/:id', accessTokenParser, loginRequiredStrictly, adminRequired, validator.delete, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
+         const { id: deleteGroupId } = req.params;
+         const { actionName, transferToUserGroupId } = req.query;
+         try {
+@@ -433,7 +434,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: A result of `UserGroup.updateName`
+      */
+-    router.put('/:id', loginRequiredStrictly, adminRequired, validator.update, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
++    router.put('/:id', accessTokenParser, loginRequiredStrictly, adminRequired, validator.update, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
+         const { id } = req.params;
+         const { name, description, parentId, forceUpdateParents = false, } = req.body;
+         try {
+@@ -478,7 +479,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: user objects
+      */
+-    router.get('/:id/users', loginRequiredStrictly, adminRequired, async (req, res) => {
++    router.get('/:id/users', accessTokenParser, loginRequiredStrictly, adminRequired, async (req, res) => {
+         const { id } = req.params;
+         try {
+             const userGroup = await user_group_1.default.findById(id);
+@@ -525,7 +526,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: user objects
+      */
+-    router.get('/:id/unrelated-users', loginRequiredStrictly, adminRequired, async (req, res) => {
++    router.get('/:id/unrelated-users', accessTokenParser, loginRequiredStrictly, adminRequired, async (req, res) => {
+         const { id } = req.params;
+         const { searchWord, searchType, isAlsoNameSearched, isAlsoMailSearched, } = req.query;
+         const queryOptions = {
+@@ -584,7 +585,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: the associative entity between user and userGroup
+      */
+-    router.post('/:id/users/:username', loginRequiredStrictly, adminRequired, validator.users.post, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
++    router.post('/:id/users/:username', accessTokenParser, loginRequiredStrictly, adminRequired, validator.users.post, apiv3_form_validator_1.apiV3FormValidator, addActivity, async (req, res) => {
+         const { id, username } = req.params;
+         try {
+             const [userGroup, user] = await Promise.all([
+@@ -644,7 +645,7 @@ module.exports = (crowi) => {
+      *                      type: object
+      *                      description: the associative entity between user and userGroup
+      */
+-    router.delete('/:id/users/:username', loginRequiredStrictly, adminRequired, validator.users.delete, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
++    router.delete('/:id/users/:username', accessTokenParser, loginRequiredStrictly, adminRequired, validator.users.delete, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
+         const { id: userGroupId, username } = req.params;
+         try {
+             const removedUserRes = await crowi.userGroupService.removeUserByUsername(userGroupId, username);
+@@ -687,7 +688,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: userGroupRelation objects
+      */
+-    router.get('/:id/user-group-relations', loginRequiredStrictly, adminRequired, async (req, res) => {
++    router.get('/:id/user-group-relations', accessTokenParser, loginRequiredStrictly, adminRequired, async (req, res) => {
+         const { id } = req.params;
+         try {
+             const userGroup = await user_group_1.default.findById(id);
+@@ -730,7 +731,7 @@ module.exports = (crowi) => {
+      *                        type: object
+      *                      description: page objects
+      */
+-    router.get('/:id/pages', loginRequiredStrictly, adminRequired, validator.pages.get, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
++    router.get('/:id/pages', accessTokenParser, loginRequiredStrictly, adminRequired, validator.pages.get, apiv3_form_validator_1.apiV3FormValidator, async (req, res) => {
+         const { id } = req.params;
+         const { limit, offset } = req.query;
+         try {
